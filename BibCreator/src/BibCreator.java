@@ -1,8 +1,10 @@
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -31,24 +33,76 @@ public class BibCreator {
 			
 		}
 		//check if the input file is valid
-		//for(int i = 1; i <= 10; i++) {
+		for(int i = 1; i <= 10; i++) {
 			try {
-				processFilesForValidation("Latex"+5+".bib", 5);
+				processFilesForValidation("Latex"+i+".bib", i);
 			} catch (FileInvalidException e) {
 				System.out.println(e.getMessage());
 			} catch (FileNotFoundException e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
-		//}
+		}
 		
 		
-		//System.out.println("A total of " + counter + " files were invalid, and could not be processed. All other " + (10-counter) + " \"Valid\" files have been created.");
+		System.out.println("A total of " + counter + " files were invalid, and could not be processed. All other " + (10-counter) + " \"Valid\" files have been created.");
 		
+		Scanner scanner = new Scanner(System.in);
+		BufferedReader fileReader = null;
+		String fileName;
+		try {
+			System.out.print("\nPlease enter the name of one of the files that you need to review: ");
+			fileName = scanner.next();
+			fileReader = new BufferedReader(new FileReader(fileName));
+			System.out.println("Here are the contents of the successfully created Jason File: " + fileName + ".");
+			displayInfo(fileReader);
+			System.out.println("\nGoodbye! Hope you have enjoyed creating the needed files using BibCreator.");
+			System.exit(0);
+		}catch(FileNotFoundException e1) {
+			System.out.println("Could not open input file. File does not exist; possibly it could not be created.");
+			System.out.println("\nHowever, you will be allowed another chance to enter another file name.");
+			//second chance to open and read a new file
+			try {
+				System.out.print("Please enter the name of one of the files that you need to review: ");
+				fileName = scanner.next();
+				fileReader = new BufferedReader(new FileReader(fileName));
+				System.out.println("Here are the contents of the successfully created Jason File: " + fileName + ".");
+				displayInfo(fileReader);
+				System.out.println("\nGoodbye! Hope you have enjoyed creating the needed files using BibCreator.");
+				System.exit(0);
+			}catch(FileNotFoundException e) {
+				System.out.println("\nCould not open input file again. Either file does not exist or could not be created.");
+				System.out.println("Sorry! I am unable to display your desired files! Program will exit!");
+				System.exit(0);
+			}catch(IOException e) {
+				System.out.println("Problem reading file. Could NOT proceed display.");
+				System.out.println("Program will terminate");
+				System.exit(0);
+			}
+			
+		}catch(IOException e) {
+			System.out.println("Problem reading file. Could NOT proceed display.");
+			System.out.println("Program will terminate");
+			System.exit(0);
+		}	
 
 	}
 
-	
+	// use BufferedReader class to read the file
+	private static void displayInfo(BufferedReader fileReader) throws IOException {
+		// TODO Auto-generated method stub
+		int c;
+		c = fileReader.read();
+		while (c != -1) {
+			System.out.print((char)c);
+			c = fileReader.read();
+		}
+		
+		fileReader.close();
+		
+	}
+
+
 	private static void processFilesForValidation(String file, int n) throws FileNotFoundException, FileInvalidException {
 		// TODO Auto-generated method stub
 		
@@ -74,20 +128,21 @@ public class BibCreator {
 		for(int i = 0; i < articles.size(); i++) {
 			//create a hashmap to store valid fields of each article
 			HashMap<String, String> article = new HashMap<String, String>();
-	
-		
-			String[] fields = articles.get(i).split(",");
+			//Get the position of the first "," of the string
+			int p = articles.get(i).indexOf(",");
+		    //split fields of each article through "},"
+			String[] fields = articles.get(i).substring((p+1),(articles.get(i).length()-1)).trim().split("},");
 //			for(int l=0; l<fields.length;l++) {
 //				System.out.println(fields[l]);
 //			}
 
 			//traverse each filed of the article except the first field and the last "}"
-			for(int j = 1; j < fields.length - 1; j++) {
-				String[] fieldSeperation = fields[j].trim().split("[={}]");
+			for(int j = 0; j < fields.length ; j++) {
+				String[] fieldSeperation = fields[j].trim().split("[={]");
 				//System.out.println(fieldSeperation.length);
 				//this shows it is invalid file, do something here
 				if(fieldSeperation.length == 1) {
-					System.out.println(fields[j].trim());
+					
 					flag = false;
 					counter ++;
 					//delete corresponding invalid files, to   
@@ -138,7 +193,7 @@ public class BibCreator {
 				//replace " and" to "&" in the author string
 				String author = pendingArticles.get(i).get("author").trim().replaceAll("and", "&");
 				//NJ standard
-				String str = author + ". " + pendingArticles.get(i).get("title").trim() + ". " + pendingArticles.get(i).get("journal").trim() + 
+				String str = "\n" + author + ". " + pendingArticles.get(i).get("title").trim() + ". " + pendingArticles.get(i).get("journal").trim() + 
 						". " + pendingArticles.get(i).get("volume").trim() + ", " + pendingArticles.get(i).get("pages").trim() + "(" + 
 						pendingArticles.get(i).get("year").trim() + ")." + "\n";
 				
@@ -166,7 +221,7 @@ public class BibCreator {
 				StringTokenizer st = new StringTokenizer(author, "&");
 				String firstAuthor = st.nextToken().trim();
 				//ACM standard
-				String str = "[" + (i+1) + "] " + firstAuthor + "et al. " + pendingArticles.get(i).get("year").trim() + ". " + pendingArticles.get(i).get("title").trim() + 
+				String str = "\n" + "[" + (i+1) + "] " + firstAuthor + " et al. " + pendingArticles.get(i).get("year").trim() + ". " + pendingArticles.get(i).get("title").trim() + 
 						". " + pendingArticles.get(i).get("journal").trim() + ". " + pendingArticles.get(i).get("volume").trim() + ", " + 
 						pendingArticles.get(i).get("number").trim() + "(" + pendingArticles.get(i).get("year").trim()+ "), " + pendingArticles.get(i).get("pages").trim() 
 						+ ". DOI:https://doi.org/"+ pendingArticles.get(i).get("doi").trim() +  "." + "\n";
@@ -192,7 +247,7 @@ public class BibCreator {
 				//replace " and" to "," in the author string
 				String author = pendingArticles.get(i).get("author").trim().replaceAll(" and", ",");
 				//IEEE standard
-				String str = author + ". \"" + pendingArticles.get(i).get("title").trim() + "\", " + pendingArticles.get(i).get("journal").trim() + 
+				String str = "\n" + author + ". \"" + pendingArticles.get(i).get("title").trim() + "\", " + pendingArticles.get(i).get("journal").trim() + 
 						", vol. " + pendingArticles.get(i).get("volume").trim() + ", no. " + pendingArticles.get(i).get("number").trim() + 
 						", p. " + pendingArticles.get(i).get("pages").trim() + ", " + pendingArticles.get(i).get("month").trim() + " " + 
 						pendingArticles.get(i).get("year").trim() + "." + "\n";
